@@ -28,6 +28,13 @@ const quickActions = [
   { icon: Headphones, label: "Mindfulness", color: "bg-success", id: "mindfulness" },
 ];
 
+const newFeatures = [
+  { icon: "✨", label: "Sky of Peace", description: "Release your worries", id: "lantern" },
+  { icon: "📋", label: "Self Assessment", description: "Quick wellness check", id: "assessment" },
+  { icon: "📚", label: "Resources", description: "Find help & support", id: "resources" },
+  { icon: "🎯", label: "Habit Builder", description: "Build positive habits", id: "habits" },
+];
+
 interface DashboardHomeProps {
   onNavigate: (page: string) => void;
 }
@@ -137,6 +144,32 @@ export const DashboardHome = ({ onNavigate }: DashboardHomeProps) => {
             </div>
           </CardContent>
         </Card>
+
+        {/* New Features */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-3 px-2">Discover New Features</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {newFeatures.map((feature) => (
+              <Card 
+                key={feature.id}
+                className="wellness-card cursor-pointer hover:scale-105 transition-transform duration-300"
+                onClick={() => onNavigate(feature.id)}
+              >
+                <CardContent className="p-3">
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">{feature.icon}</div>
+                    <h3 className="text-sm font-semibold text-foreground mb-1">
+                      {feature.label}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
 
         {/* Emergency Support */}
         <Card className="wellness-card border-destructive/20">
