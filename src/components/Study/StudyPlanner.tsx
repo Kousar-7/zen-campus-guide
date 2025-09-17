@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Calendar,
   Clock,
@@ -16,105 +17,53 @@ import {
   Star,
   Brain,
   Coffee,
-  AlertCircle
+  AlertCircle,
+  Timer,
+  Award,
+  Heart
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useStudyTasks, useStudyStats } from "@/hooks/useSupabase";
+import { PomodoroTimer } from "./PomodoroTimer";
+import { StudyStreaks } from "./StudyStreaks";
+import { VirtualPet } from "@/components/VirtualPet/VirtualPet";
 
-interface StudyTask {
-  id: number;
-  title: string;
-  subject: string;
-  description: string;
-  dueDate: string;
-  priority: 'low' | 'medium' | 'high';
-  completed: boolean;
-  estimatedTime: number; // in minutes
-  actualTime?: number;
-  type: 'assignment' | 'reading' | 'exam' | 'project';
-}
+// Task and Session interfaces moved to useSupabase hook
 
-interface StudySession {
-  id: number;
-  date: string;
-  duration: number; // in minutes
-  subject: string;
-  focusRating: number; // 1-5
-}
-
-const defaultTasks: StudyTask[] = [
-  {
-    id: 1,
-    title: "Psychology Essay",
-    subject: "Psychology",
-    description: "Write 2000-word essay on cognitive behavioral therapy",
-    dueDate: "2024-12-20",
-    priority: 'high',
-    completed: false,
-    estimatedTime: 180,
-    type: 'assignment'
-  },
-  {
-    id: 2,
-    title: "Statistics Chapter 7",
-    subject: "Statistics",
-    description: "Read and summarize statistical inference concepts",
-    dueDate: "2024-12-18",
-    priority: 'medium',
-    completed: true,
-    estimatedTime: 90,
-    actualTime: 85,
-    type: 'reading'
-  },
-  {
-    id: 3,
-    title: "Biology Lab Report",
-    subject: "Biology",
-    description: "Complete molecular biology lab analysis",
-    dueDate: "2024-12-22",
-    priority: 'medium',
-    completed: false,
-    estimatedTime: 120,
-    type: 'assignment'
-  }
-];
-
-const studySessions: StudySession[] = [
-  { id: 1, date: "2024-12-15", duration: 120, subject: "Psychology", focusRating: 4 },
-  { id: 2, date: "2024-12-14", duration: 90, subject: "Statistics", focusRating: 5 },
-  { id: 3, date: "2024-12-13", duration: 150, subject: "Biology", focusRating: 3 },
-];
+// Default data moved to useSupabase hook
 
 export const StudyPlanner = () => {
-  const [tasks, setTasks] = useState<StudyTask[]>(defaultTasks);
+  const { tasks, addTask, updateTask, loading } = useStudyTasks();
+  const { sessions, addStudySession } = useStudyStats();
   const [showAddTask, setShowAddTask] = useState(false);
+  const [activeTab, setActiveTab] = useState('tasks');
   const [newTask, setNewTask] = useState({
     title: '',
     subject: '',
     description: '',
-    dueDate: '',
+    due_date: '',
     priority: 'medium' as const,
-    estimatedTime: 60,
-    type: 'assignment' as const
+    estimated_time: 60,
+    type: 'assignment' as const,
+    completed: false
   });
 
-  const toggleTask = (taskId: number) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed }
-        : task
-    ));
-    
+  const toggleTask = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    if (task && !task.completed) {
-      toast({
-        title: "Task Completed! 🎉",
-        description: `Great job finishing "${task.title}"!`,
-      });
+    if (task) {
+      await updateTask(taskId, { completed: !task.completed });
+      
+      if (!task.completed) {
+        toast({
+          title: "Task Completed! 🎉",
+          description: `Great job finishing "${task.title}"!`,
+        });
+      }
     }
   };
 
-  const addTask = () => {
-    if (!newTask.title || !newTask.subject || !newTask.dueDate) {
+  const handleAddTask = async () => {
+    if (!newTask.title || !newTask.subject || !newTask.due_date) {
       toast({
         title: "Missing Information",
         description: "Please fill in title, subject, and due date.",
@@ -123,28 +72,48 @@ export const StudyPlanner = () => {
       return;
     }
 
-    const task: StudyTask = {
-      id: Date.now(),
-      ...newTask,
-      completed: false
-    };
+    try {
+      const task = await addTask(newTask);
+      setNewTask({
+        title: '',
+        subject: '',
+        description: '',
+        due_date: '',
+        priority: 'medium',
+        estimated_time: 60,
+        type: 'assignment',
+        completed: false
+      });
+      setShowAddTask(false);
 
-    setTasks([...tasks, task]);
-    setNewTask({
-      title: '',
-      subject: '',
-      description: '',
-      dueDate: '',
-      priority: 'medium',
-      estimatedTime: 60,
-      type: 'assignment'
-    });
-    setShowAddTask(false);
+      toast({
+        title: "Task Added! 📚",
+        description: `"${task.title}" has been added to your study plan.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add task. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
-    toast({
-      title: "Task Added! 📚",
-      description: `"${task.title}" has been added to your study plan.`,
-    });
+  const handlePomodoroComplete = async (duration: number, type: 'study' | 'break') => {
+    if (type === 'study') {
+      await addStudySession({
+        date: new Date().toISOString().split('T')[0],
+        duration,
+        subject: 'Pomodoro Study',
+        focus_rating: 5,
+        session_type: 'pomodoro'
+      });
+      
+      toast({
+        title: "Study Session Recorded! 📊",
+        description: `${duration} minutes of focused study logged.`,
+      });
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -169,17 +138,17 @@ export const StudyPlanner = () => {
   const totalTasks = tasks.length;
   const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
-  const todaysStudyTime = studySessions
+  const todaysStudyTime = sessions
     .filter(session => session.date === new Date().toISOString().split('T')[0])
     .reduce((total, session) => total + session.duration, 0);
 
-  const averageFocus = studySessions.length > 0 
-    ? studySessions.reduce((sum, session) => sum + session.focusRating, 0) / studySessions.length
+  const averageFocus = sessions.length > 0 
+    ? sessions.reduce((sum, session) => sum + session.focus_rating, 0) / sessions.length
     : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10 p-4 pb-24">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2 pt-6">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -236,27 +205,58 @@ export const StudyPlanner = () => {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3">
-          <Button 
-            onClick={() => setShowAddTask(true)}
-            className="bg-gradient-to-r from-primary to-primary-glow hover:shadow-elegant transition-all duration-300"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Task
-          </Button>
-          <Button variant="outline" className="border-accent/30 hover:bg-accent/10">
-            <Coffee className="w-4 h-4 mr-2" />
-            Start Study Timer
-          </Button>
-          <Button variant="outline" className="border-secondary/30 hover:bg-secondary/10">
-            <Calendar className="w-4 h-4 mr-2" />
-            Schedule Study
-          </Button>
-        </div>
+        {/* Main Content Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="tasks" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Tasks
+            </TabsTrigger>
+            <TabsTrigger value="timer" className="flex items-center gap-2">
+              <Timer className="w-4 h-4" />
+              Timer
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="flex items-center gap-2">
+              <Award className="w-4 h-4" />
+              Progress
+            </TabsTrigger>
+            <TabsTrigger value="pet" className="flex items-center gap-2">
+              <Heart className="w-4 h-4" />
+              Pet Buddy
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Add New Task Form */}
-        {showAddTask && (
+          <TabsContent value="tasks" className="space-y-6">
+            {/* Quick Actions */}
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                onClick={() => setShowAddTask(true)}
+                className="bg-gradient-to-r from-primary to-primary-light hover:shadow-lg transition-all duration-300"
+                disabled={loading}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Task
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-accent/30 hover:bg-accent/10"
+                onClick={() => setActiveTab('timer')}
+              >
+                <Timer className="w-4 h-4 mr-2" />
+                Start Study Timer
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-secondary/30 hover:bg-secondary/10"
+                onClick={() => setActiveTab('progress')}
+              >
+                <Award className="w-4 h-4 mr-2" />
+                View Progress
+              </Button>
+            </div>
+
+            {/* Add New Task Form */}
+            {showAddTask && (
           <Card className="bg-card/80 backdrop-blur border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -287,8 +287,8 @@ export const StudyPlanner = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
                   type="date"
-                  value={newTask.dueDate}
-                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                  value={newTask.due_date}
+                  onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
                 />
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -312,7 +312,11 @@ export const StudyPlanner = () => {
               </div>
               
               <div className="flex gap-3">
-                <Button onClick={addTask} className="bg-gradient-to-r from-primary to-primary-glow">
+                <Button 
+                  onClick={handleAddTask} 
+                  className="bg-gradient-to-r from-primary to-primary-light"
+                  disabled={loading}
+                >
                   Add Task
                 </Button>
                 <Button variant="outline" onClick={() => setShowAddTask(false)}>
@@ -321,10 +325,10 @@ export const StudyPlanner = () => {
               </div>
             </CardContent>
           </Card>
-        )}
+            )}
 
-        {/* Tasks List */}
-        <Card className="bg-card/50 backdrop-blur border-primary/20">
+            {/* Tasks List */}
+            <Card className="bg-card/50 backdrop-blur border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5" />
@@ -340,7 +344,7 @@ export const StudyPlanner = () => {
             ) : (
               tasks.map((task) => {
                 const TaskIcon = getTaskIcon(task.type);
-                const isOverdue = new Date(task.dueDate) < new Date() && !task.completed;
+                const isOverdue = new Date(task.due_date) < new Date() && !task.completed;
                 
                 return (
                   <div
@@ -388,11 +392,11 @@ export const StudyPlanner = () => {
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                            Due: {new Date(task.due_date).toLocaleDateString()}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {task.estimatedTime}min
+                            {task.estimated_time}min
                           </span>
                           <Badge className={getPriorityColor(task.priority)}>
                             {task.priority}
@@ -404,8 +408,22 @@ export const StudyPlanner = () => {
                 );
               })
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="timer">
+            <PomodoroTimer onSessionComplete={handlePomodoroComplete} />
+          </TabsContent>
+
+          <TabsContent value="progress">
+            <StudyStreaks />
+          </TabsContent>
+
+          <TabsContent value="pet">
+            <VirtualPet />
+          </TabsContent>
+        </Tabs>
 
         {/* Wellness Reminder */}
         <Card className="bg-gradient-to-r from-accent/10 to-secondary/10 border-accent/20">
