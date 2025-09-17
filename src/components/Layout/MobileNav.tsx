@@ -12,7 +12,8 @@ import {
   ClipboardList,
   BookOpen,
   Target,
-  Moon
+  Moon,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ const moreNavItems = [
   { id: "resources", icon: BookOpen, label: "Resources" },
   { id: "habits", icon: Target, label: "Habits" },
   { id: "sleep", icon: Moon, label: "Sleep" },
+  { id: "study", icon: Calendar, label: "Study" },
   { id: "community", icon: Users, label: "Community" },
   { id: "profile", icon: User, label: "Profile" },
 ];

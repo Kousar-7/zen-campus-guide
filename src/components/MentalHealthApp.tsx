@@ -15,6 +15,7 @@ import { SleepTracker } from "./Sleep/SleepTracker";
 import { LocationTracker } from "./Location/LocationTracker";
 import { EmotionDetector } from "./Emotion/EmotionDetector";
 import { HealthDashboard } from "./Health/HealthDashboard";
+import { StudyPlanner } from "./Study/StudyPlanner";
 
 export const MentalHealthApp = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -55,6 +56,8 @@ export const MentalHealthApp = () => {
         return <EmotionDetector />;
       case "health":
         return <HealthDashboard />;
+      case "study":
+        return <StudyPlanner />;
       default:
         return <DashboardHome onNavigate={handleNavigate} />;
     }
