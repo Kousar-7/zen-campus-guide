@@ -16,6 +16,9 @@ import { LocationTracker } from "./Location/LocationTracker";
 import { EmotionDetector } from "./Emotion/EmotionDetector";
 import { HealthDashboard } from "./Health/HealthDashboard";
 import { StudyPlanner } from "./Study/StudyPlanner";
+import { VoiceAssistant } from "./AI/VoiceAssistant";
+import { CounselorBooking } from "./Counselor/CounselorBooking";
+import { SmartWatchTracker } from "./Health/SmartWatchTracker";
 
 export const MentalHealthApp = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -58,6 +61,12 @@ export const MentalHealthApp = () => {
         return <HealthDashboard />;
       case "study":
         return <StudyPlanner />;
+      case "voice":
+        return <VoiceAssistant />;
+      case "counselor":
+        return <CounselorBooking />;
+      case "smartwatch":
+        return <SmartWatchTracker />;
       default:
         return <DashboardHome onNavigate={handleNavigate} />;
     }

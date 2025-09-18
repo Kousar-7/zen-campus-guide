@@ -13,7 +13,10 @@ import {
   BookOpen,
   Target,
   Moon,
-  Calendar
+  Calendar,
+  Mic,
+  UserCheck,
+  Watch
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +34,9 @@ const navItems = [
 ];
 
 const moreNavItems = [
+  { id: "voice", icon: Mic, label: "AI Voice" },
+  { id: "counselor", icon: UserCheck, label: "Counselor" },
+  { id: "smartwatch", icon: Watch, label: "Health Track" },
   { id: "lantern", icon: Sparkles, label: "Sky Peace" },
   { id: "assessment", icon: ClipboardList, label: "Assessment" },
   { id: "resources", icon: BookOpen, label: "Resources" },

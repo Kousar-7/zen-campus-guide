@@ -151,7 +151,7 @@ export const VirtualPet = () => {
     });
   };
 
-  // Simulate emotion detection response
+  // Enhanced emotion detection with more nuanced responses
   const respondToUserEmotion = (detectedEmotion: string) => {
     const responses = emotionResponses[detectedEmotion as keyof typeof emotionResponses] || studyMotivation;
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
@@ -306,15 +306,15 @@ export const VirtualPet = () => {
           </div>
         </div>
 
-        {/* Emotion Response Test Buttons */}
-        <div className="grid grid-cols-2 gap-2 pt-4 border-t border-border">
+        {/* Emotion Response Test Buttons - Enhanced */}
+        <div className="grid grid-cols-3 gap-1 pt-4 border-t border-border">
           <Button 
             onClick={() => respondToUserEmotion('happy')}
             variant="outline"
             size="sm"
             className="text-xs"
           >
-            😊 Happy Response
+            😊 Happy
           </Button>
           <Button 
             onClick={() => respondToUserEmotion('stressed')}
@@ -322,9 +322,34 @@ export const VirtualPet = () => {
             size="sm"
             className="text-xs"
           >
-            😰 Stress Support
+            😰 Stressed
+          </Button>
+          <Button 
+            onClick={() => respondToUserEmotion('tired')}
+            variant="outline" 
+            size="sm"
+            className="text-xs"
+          >
+            😴 Tired
           </Button>
         </div>
+
+        {/* Pet Achievements */}
+        {pet.achievements && pet.achievements.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-yellow-500" />
+              <span className="text-sm font-medium">Achievements</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {pet.achievements.map((achievement) => (
+                <Badge key={achievement} variant="outline" className="text-xs bg-yellow-500/10 border-yellow-500/30">
+                  🏆 {achievement.replace('_', ' ')}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
