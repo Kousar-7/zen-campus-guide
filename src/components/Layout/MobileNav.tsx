@@ -16,7 +16,8 @@ import {
   Calendar,
   Mic,
   UserCheck,
-  Watch
+  Watch,
+  PawPrint
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,10 +28,10 @@ interface MobileNavProps {
 
 const navItems = [
   { id: "home", icon: Home, label: "Home" },
-  { id: "chat", icon: MessageCircle, label: "Chat" },
+  { id: "pet", icon: PawPrint, label: "Pet" },
   { id: "mood", icon: Heart, label: "Mood" },
   { id: "games", icon: Gamepad2, label: "Relief" },
-  { id: "mindfulness", icon: Headphones, label: "Mindful" },
+  { id: "chat", icon: MessageCircle, label: "Chat" },
 ];
 
 const moreNavItems = [

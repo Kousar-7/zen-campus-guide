@@ -19,6 +19,7 @@ import { StudyPlanner } from "./Study/StudyPlanner";
 import { VoiceAssistant } from "./AI/VoiceAssistant";
 import { CounselorBooking } from "./Counselor/CounselorBooking";
 import { SmartWatchTracker } from "./Health/SmartWatchTracker";
+import { VirtualPet } from "./VirtualPet/VirtualPet";
 
 export const MentalHealthApp = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -67,6 +68,8 @@ export const MentalHealthApp = () => {
         return <CounselorBooking />;
       case "smartwatch":
         return <SmartWatchTracker />;
+      case "pet":
+        return <VirtualPet />;
       default:
         return <DashboardHome onNavigate={handleNavigate} />;
     }
